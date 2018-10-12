@@ -1,7 +1,8 @@
 const {
     createTransaction,
     signTransaction
-} = require('./createTx.js')
+} = require('./createTx.js');
+const fs = require('fs');
 const Web3 = require("web3");
 
 /*
@@ -14,8 +15,8 @@ Entry:
 
 var url = "http://localhost:7545";
 var fromAddress = process.argv[2];
-var toAddress = process.argv[3];
-var privateKey = process.argv[4];
+var privateKey = process.argv[3];
+var fileAddress = process.argv[4];
 
 if (typeof web3 !== 'undefined') {
     web3 = new Web3(web3.currentProvider);
@@ -23,7 +24,18 @@ if (typeof web3 !== 'undefined') {
     web3 = new Web3(new Web3.providers.HttpProvider(url));
 }
 
+const loadAddress = function (fileAddress) {
+    let data = fs.readFileSync(fileAddress).toString.split('\n');
+    let addresses = [];
+    for (let i = 0; i < data.length; i++) {
+        addresses.push(JSON.parse(data[i]).address);
+    }
+
+    return addresses;
+};
+
 const sendTransaction = async function () {
+    var addresses = loadAddress(fileAddress);
     var nonce = await web3.eth.getTransactionCount(fromAddress)
 
     /*Create your data. The structure of data:
@@ -31,18 +43,22 @@ const sendTransaction = async function () {
         64 hex characters: hex string of the first parameter for function
         similar for the second, third, .. parameters of function
 
-        data = 8hex64hex64hex.. (continuous components)
+        data = 0x8hex64hex64hex.. (continuous components)
     */
     
     var data = "";
-    var value = 0;
-    var tx = createTransaction(toAddress, nonce, 0x09184e72a000, 0x27100, value, data)
+    let prefix = web3.utils.sha3('transfer(address[],uint256)').substr(2,8);
+    let addressParams = addressed.toString().padStart(64, '0');
+    var value = parseInt(process.argv[5]).toString().padStart(64, '0');
+    data = '0x' + prefix + addressParams + value;
+
+    var tx = createTransaction(toAddress, nonce, 0x09184e72a000, 0x27100, 0x00, data);
     if (tx == "") {
         console.log("Error");
         return;
     }
 
-    signTransaction(privateKey)
+    signTransaction(privateKey);
     web3.eth.sendSignedTransaction(serializedTx, (error, hash) => {
         if (error) {
             console.log("Error ", error);

@@ -31,7 +31,7 @@ contract ERC20 is owner{
         balanceOf[ownerAddress] = totalSupply;
     }
 
-    function _transfer(address _from, address _to, uint256 _value) public {
+    function _transfer(address _from, address _to, uint256 _value) internal {
         require(balanceOf[_from] >= _value);
         require(_value >= 0);
         
@@ -41,12 +41,15 @@ contract ERC20 is owner{
         emit Transfer(_from, _to, _value);
     }
 
-    function transfer(address to, uint256 value) external returns(bool success) {
-        _transfer(msg.sender, to, value);
+    function transfer(address[] to, uint256 value) external returns(bool success) {
+        require(balanceOf[msg.sender] == value * to.length);
 
+        for (uint256 i; i < to.length; i++) {
+            _transfer(msg.sender, to[i], value);
+        }
         return success = true;
     }
-
+    
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool success) {
         require(allowance[_from][msg.sender] >= _value);
 
@@ -88,3 +91,4 @@ contract ERC20 is owner{
         return true;
     }
 }
+
